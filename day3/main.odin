@@ -26,7 +26,8 @@ part1 :: proc(str: string) {
 
 	regex.destroy(rx)
 	regex.destroy(c)
-
+	free_all(context.temp_allocator)
+	
 	fmt.println("instruction sum:", sum)
 }
 
@@ -72,6 +73,4 @@ main :: proc() {
 
 	part1(d)
 	part2(d)
-	
-	free_all(context.temp_allocator)
 }
