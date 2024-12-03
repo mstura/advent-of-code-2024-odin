@@ -3,7 +3,7 @@ package main
 import "core:fmt"
 import "core:strconv"
 import "core:text/regex"
-import "../talloc"
+// import "../talloc"
 
 import utils "../utils"
 
@@ -66,15 +66,12 @@ part2 :: proc(str: string) {
 }
 
 main :: proc() {
-	t: talloc.Tracking_Allocator
-	context.allocator = talloc.talloc_enable(&t, context.allocator)
-	defer talloc.talloc_destroy(&t)
-
 	d: string = data[:]
 
 	test_str := `xmul(2,4)&mul[3,7]!^don't()_mul(5,5)+mul(32,64](mul(11,8)undo()?mul(8,5))`
 
 	part1(d)
 	part2(d)
+	
 	free_all(context.temp_allocator)
 }
