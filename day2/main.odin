@@ -1,25 +1,12 @@
 package main
 
 import "core:fmt"
-import "core:slice"
-import "core:sort"
 import "core:strconv"
 import "core:strings"
-import "core:time"
-import "base:runtime"
+
+import utils "../utils"
 
 data :: #load("./data", string)
-
-@(require_results)
-slice_splice :: proc(s: $S/[]$U, idx: int, allocator := context.allocator) -> (res: S, err: runtime.Allocator_Error) #optional_allocator_error {
-	r := make([dynamic]U, 0, 0, allocator) or_return
-	for v, i in s {
-		if i != idx {
-			append(&r, v)
-		}
-	}
-	return r[:], nil
-}
 
 safe_increasing :: proc(report: []int, remove_count := 0) -> bool {
 	rp := report
@@ -29,7 +16,7 @@ safe_increasing :: proc(report: []int, remove_count := 0) -> bool {
 		if prev > v || prev == v || v - prev > 3 {
 			if remove_count > 0 {
 				for x in 0 ..< len(rp) {
-					fr := slice_splice(rp, x)
+					fr := utils.slice_splice(rp, x)
 					res := report_safe(fr)
 					delete(fr)
 					if (res) {
@@ -53,7 +40,7 @@ safe_decreasing :: proc(report: []int, remove_count := 0) -> bool {
 		if prev < v || prev == v || (prev - v) > 3 {
 			if remove_count > 0 {
 				for x in 0 ..< len(rp) {
-					fr := slice_splice(rp, x)
+					fr := utils.slice_splice(rp, x)
 					res := report_safe(fr)
 					delete(fr)
 					if (res) {

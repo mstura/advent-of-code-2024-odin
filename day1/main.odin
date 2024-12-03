@@ -1,11 +1,9 @@
 package main
 
 import "core:fmt"
-import "core:slice"
 import "core:sort"
 import "core:strconv"
 import "core:strings"
-import "core:time"
 
 data :: #load("./data", string)
 
