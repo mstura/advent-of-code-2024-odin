@@ -3,8 +3,6 @@ package main
 import "../grid"
 import "core:bytes"
 import "core:fmt"
-import "core:strconv"
-import "core:strings"
 import "core:testing"
 
 data :: #load("./data", []byte)
@@ -158,8 +156,7 @@ test_part1 :: proc(t: ^testing.T) {
 	testing.expect_value(t, c, 41)
 }
 
-part2 :: proc(grd: ^[$x][$y]Tile, g: ^Guard) -> [dynamic]Point {
-	ps := make([dynamic]Point, context.temp_allocator)
+part2 :: proc(grd: ^[$x][$y]Tile, g: ^Guard) -> (c: int) {
 	start_pos := g.pos
 	start_dir := g.dir
 
@@ -176,7 +173,7 @@ part2 :: proc(grd: ^[$x][$y]Tile, g: ^Guard) -> [dynamic]Point {
 
 			grd^[_y][_x] = {false, .Obstruction}
 
-			routes := make(map[Guard]struct{}, context.allocator)
+			routes := make(map[Guard]struct {}, context.allocator)
 			defer delete(routes)
 
 			for {
@@ -184,16 +181,16 @@ part2 :: proc(grd: ^[$x][$y]Tile, g: ^Guard) -> [dynamic]Point {
 				if !in_bounds(grd, npos) do break
 				if t := grd[npos.y][npos.x]; t.kind == .Block {
 					if _, ok := routes[g^]; ok {
-						append(&ps, npos)
+						c += 1
 						break
 					} else {
-						routes[g^] = struct{}{}
+						routes[g^] = struct {}{}
 					}
 					turn_right(g)
 					continue
 				} else if t.kind == .Obstruction {
 					if hit && hdir == g.dir && hpos == g.pos {
-						append(&ps, npos)
+						c += 1
 						break
 					}
 					hdir = g.dir
@@ -211,16 +208,16 @@ part2 :: proc(grd: ^[$x][$y]Tile, g: ^Guard) -> [dynamic]Point {
 		}
 	}
 
-	return ps
+	return
 }
 
 @(test)
 test_part2 :: proc(t: ^testing.T) {
 	dex := data_example
 	grd, g := parse(&dex, 10, 10)
-	points := part2(&grd, &g)
+	c := part2(&grd, &g)
 
-	testing.expect_value(t, len(points), 6)
+	testing.expect_value(t, c, 6)
 }
 
 main :: proc() {
@@ -228,7 +225,7 @@ main :: proc() {
 	grd, g := parse(&dex, DATA_SIZE, DATA_SIZE)
 	// c := part1(&grd, &g)
 
-	ps := part2(&grd, &g)
+	c := part2(&grd, &g)
 
-	fmt.println("number of possible obstructions: ", len(ps))
+	fmt.println("number of possible obstructions: ", c)
 }
