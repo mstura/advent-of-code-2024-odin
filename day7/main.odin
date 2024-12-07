@@ -24,7 +24,7 @@ p10 :: proc "contextless" (x: int) -> int {
 	return p
 }
 
-is_valid :: proc(target: int, ops: []int, op_type: Operator = .Add, p2: bool) -> bool {
+is_valid :: proc "contextless" (target: int, ops: []int, op_type: Operator = .Add, p2: bool) -> bool {
 	if (target == 0 || (target == 1 && op_type == .Multiply)) && len(ops) == 0 do return true
 	if len(ops) == 0 do return false
 	l := ops[len(ops) - 1]
