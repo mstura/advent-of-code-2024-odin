@@ -145,7 +145,6 @@ main :: proc() {
 	data := #load("./data", []byte)
 
 	parse(&data)
-	time
 	part1()
 	part2()
 
