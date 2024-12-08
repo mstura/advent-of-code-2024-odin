@@ -1,11 +1,9 @@
-package main
+package day8
 
 import "core:bytes"
 import sa "core:container/small_array"
 import "core:fmt"
 import "core:testing"
-
-data_example :: #load("./data_example", string)
 
 Small_Array :: sa.Small_Array
 
@@ -18,25 +16,28 @@ Antenna :: struct {
 	freq: u8,
 }
 
-sum: int
-sum_p2: int
+when ODIN_TEST {
+	len_x :: 12
+	len_y :: 12
+} else {
+	len_x :: 50
+	len_y :: 50
+}
 
-len_x: int
-len_y: int
+p1_antenna_positions: Small_Array(237, Antenna)
+p2_antenna_positions: Small_Array(237, Antenna)
 
-antenna_positions: Small_Array(237, Antenna)
-an_pos: map[Point]struct {}
-
-parse :: proc(data: ^[]byte) {
+parse :: proc(data: ^[]byte, acc: ^Small_Array(237, Antenna)) -> []Antenna {
+	sa.clear(acc)
 	y := 0
 	for line in bytes.split_iterator(data, LB) {
-		if len_x == 0 do len_x = len(line)
 		for c, x in line {
-			if c != CLR do sa.append(&antenna_positions, Antenna{{x, y}, c})
+			if c != CLR do sa.append(acc, Antenna{{x, y}, c})
 		}
 		y += 1
 	}
-	len_y = y
+
+	return sa.slice(acc)
 }
 
 in_grid :: #force_inline proc(p: Point) -> bool {
@@ -72,11 +73,13 @@ test_antinode_pos :: proc(t: ^testing.T) {
 	testing.expect_value(t, antinode_pos(p2, pdif2), Point{2, 3})
 }
 
-part1 :: proc() {
-	l := sa.len(antenna_positions)
+part1 :: proc(apos: []Antenna) -> int {
+	c: int = 0
+	l := len(apos)
+	m := [len_y][len_x]bool{}
 	for i1 in 0 ..< l do for i2 in i1 + 1 ..< l {
-		a := sa.get(antenna_positions, i1)
-		b := sa.get(antenna_positions, i2)
+		a := apos[i1]
+		b := apos[i2]
 
 		if a.freq != b.freq do continue
 
@@ -86,68 +89,92 @@ part1 :: proc() {
 		an1 := antinode_pos(a.pos, pdif1)
 		an2 := antinode_pos(b.pos, pdif2)
 
-		if _, ok := an_pos[an1]; !ok && in_grid(an1) do an_pos[an1] = struct {}{}
-		if _, ok := an_pos[an2]; !ok && in_grid(an2) do an_pos[an2] = struct {}{}
+		if in_grid(an1) && !m[an1.y][an1.x] {
+			m[an1.y][an1.x] = true
+			c += 1
+		}
+		if in_grid(an2) && !m[an2.y][an2.x] {
+			m[an2.y][an2.x] = true
+			c += 1
+		}
 	}
 
-	sum = len(an_pos)
+	return c
 }
 
 @(test)
 test_part1 :: proc(t: ^testing.T) {
-	defer delete(an_pos)
 	data_example := #load("./data_example", []byte)
-	parse(&data_example)
-	part1()
+	a := parse(&data_example, &p1_antenna_positions)
+	c := part1(a)
 
-	testing.expect_value(t, sum, 14)
+	testing.expect_value(t, c, 14)
 }
 
-calculate_antinodes :: #force_inline proc(a, diff: Point) {
+calculate_antinodes :: #force_inline proc(a, diff: Point, m: ^[len_y][len_x]bool, acc: ^int) {
 	p := a
 
 	for {
-		if _, ok := an_pos[p]; !ok do an_pos[p] = struct {}{}
-		p = antinode_pos(p, diff)
 		if !in_grid(p) do break
+		if !m[p.y][p.x] {
+			m[p.y][p.x] = true
+			acc^ += 1
+		}
+		p = antinode_pos(p, diff)
 	}
 }
 
-part2 :: proc() {
-	l := sa.len(antenna_positions)
+part2 :: proc(apos: []Antenna) -> int {
+	c: int = 0
+	l := len(apos)
+	m := [len_y][len_x]bool{}
 	for i1 in 0 ..< l do for i2 in i1 + 1 ..< l {
-		a := sa.get(antenna_positions, i1)
-		b := sa.get(antenna_positions, i2)
+		a := apos[i1]
+		b := apos[i2]
 
 		if a.freq != b.freq do continue
 
 		pdif1 := point_diff(a.pos, b.pos)
 		pdif2 := pdif1 * -1
 
-		calculate_antinodes(a.pos, pdif1)
-		calculate_antinodes(b.pos, pdif2)
+		calculate_antinodes(a.pos, pdif1, &m, &c)
+		calculate_antinodes(b.pos, pdif2, &m, &c)
 	}
 
-	sum_p2 = len(an_pos)
+	return c
 }
 
 @(test)
 test_part2 :: proc(t: ^testing.T) {
-	defer delete(an_pos)
 	data_example := #load("./data_example", []byte)
-	parse(&data_example)
-	part2()
+	o := parse(&data_example, &p2_antenna_positions)
+	c := part2(o)
 
-	testing.expect_value(t, sum_p2, 34)
+	testing.expect_value(t, c, 34)
+}
+
+solve_part1 :: proc(input: []byte) -> int {
+	data := input
+	a := parse(&data, &p1_antenna_positions)
+	return part1(a)
+}
+
+solve_part2 :: proc(input: []byte) -> int {
+	data := input
+	a := parse(&data, &p2_antenna_positions)
+	return part2(a)
 }
 
 main :: proc() {
 	data := #load("./data", []byte)
 
-	parse(&data)
-	part1()
-	part2()
+	// part 1 benchmark 13.7us
+	c := solve_part1(data)
 
-	fmt.println("antinodes found: ", sum)
-	fmt.println("antinodes found: ", sum_p2)
+	fmt.println("antinodes found: ", c)
+
+	// part 2 benchmark 16.2us
+	c = solve_part2(data)
+
+	fmt.println("antinodes found: ", c)
 }
