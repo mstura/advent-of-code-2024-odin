@@ -3,8 +3,6 @@ package main
 import "core:bytes"
 import sa "core:container/small_array"
 import "core:fmt"
-import "core:mem/virtual"
-import "core:strings"
 import "core:testing"
 
 data_example :: #load("./data_example", string)
@@ -147,6 +145,7 @@ main :: proc() {
 	data := #load("./data", []byte)
 
 	parse(&data)
+	time
 	part1()
 	part2()
 
